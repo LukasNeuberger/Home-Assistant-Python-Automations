@@ -2,7 +2,7 @@
 
 App-Damon was kind of a hassle, so I started my own Home Assistant Python Automation system.
 Startup.py is the entry point.
-It first looks for python files in the subfolder './Apps' and calls function 'initialize' if it exists.
+It first looks for python files in the subfolder './Automations' and calls function 'initialize' if it exists.
 Here automations can intialize before a connection to the Home Assistant server is established and register callbacks for state changed events.
 Then the connection to the Home Assistant server is established.
 For this, Environment variables 'HOMEASSISTANT_DOMAIN' and 'HOMEASSISTANT_API_TOKEN' need to be configured.
