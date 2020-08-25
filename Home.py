@@ -72,6 +72,33 @@ async def main():
          'access_token': API_AccessToken}
     ))
 
+    getStateMsgId = nextId
+    await websocket.send(json.dumps(
+        {'id': getStateMsgId, "type": "get_states"}
+    ))
+    nextId += 1
+
+    stateInitialized = False
+    while not stateInitialized:
+        message = await websocket.recv()
+
+        if message is None:
+            break
+        dic = json.loads(message)
+
+        # if debug output is activated via DEBUG environment variable, print received payload
+        if(Debug):
+            print(dic)
+
+        # initialize state with result of initial getState request and trigger callbacks of apps
+        if(dic["type"] == "result" and dic["id"] == getStateMsgId):
+            getStateMsgId = None
+            for el in dic["result"]:
+                entity = el["entity_id"]
+                state[entity] = el
+            triggerStateInitialized()
+            stateInitialized = True
+
     await websocket.send(json.dumps(
         {'id': nextId, 'type': 'subscribe_events', 'event_type': 'state_changed'}
     ))
@@ -79,12 +106,6 @@ async def main():
     
     await websocket.send(json.dumps(
         {'id': nextId, 'type': 'subscribe_events', 'event_type': 'deconz_event'}
-    ))
-    nextId += 1
-
-    getStateMsgId = nextId
-    await websocket.send(json.dumps(
-        {'id': getStateMsgId, "type": "get_states"}
     ))
     nextId += 1
 
@@ -120,14 +141,6 @@ async def main():
             # trigger state changed callbacks
             if((oldState == None) or (state[entity] != oldState)):
                 triggerStateChanged(entity, newState, oldState)
-
-        # initialize state with result of initial getState request and trigger callbacks of apps
-        elif(dic["type"] == "result" and dic["id"] == getStateMsgId):
-            getStateMsgId = None
-            for el in dic["result"]:
-                entity = el["entity_id"]
-                state[entity] = el
-            triggerStateInitialized()
 
 
 def run():
