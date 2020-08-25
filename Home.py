@@ -6,6 +6,10 @@ import os
 HomeassistantDomain = os.environ['HOMEASSISTANT_DOMAIN']
 API_AccessToken = os.environ['HOMEASSISTANT_API_TOKEN']
 
+Debug = False
+if "DEBUG" in os.environ and os.environ["DEBUG"] == "True":
+    Debug = True
+
 state = {}
 stateChangedCallbacks = set()
 stateInitializedCallbacks = set()
@@ -72,6 +76,11 @@ async def main():
         {'id': nextId, 'type': 'subscribe_events', 'event_type': 'state_changed'}
     ))
     nextId += 1
+    
+    await websocket.send(json.dumps(
+        {'id': nextId, 'type': 'subscribe_events', 'event_type': 'deconz_event'}
+    ))
+    nextId += 1
 
     getStateMsgId = nextId
     await websocket.send(json.dumps(
@@ -86,11 +95,20 @@ async def main():
             break
         dic = json.loads(message)
 
+        # if debug output is activated via DEBUG environment variable, print received payload
+        if(Debug):
+            print(dic)
+
         # if the state of an entity has changed update state and trigger callbacks of apps
         if(dic["type"] == "event"):
-            entity = dic["event"]["data"]["entity_id"]
-            newState = dic["event"]["data"]["new_state"]
-            oldState = None
+            if(dic["event"]["event_type"] == "state_changed"):
+                entity = dic["event"]["data"]["entity_id"]
+                newState = dic["event"]["data"]["new_state"]
+                oldState = None
+            elif(dic["event"]["event_type"] == "deconz_event"):
+                entity = dic["event"]["data"]["id"]
+                newState = dic["event"]["data"]["event"]
+                oldState = None
 
             # get old state if it exists
             if entity in state:
