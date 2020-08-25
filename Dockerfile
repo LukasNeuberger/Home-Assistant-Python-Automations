@@ -1,5 +1,9 @@
 FROM python:slim
 
+ENV HOMEASSISTANT_DOMAIN=""
+ENV HOMEASSISTANT_API_TOKEN=""
+ENV DEBUG="False"
+
 RUN useradd -c "ha-py-automations" \
     -d /home/ha-py-automations -m \
     -u 999 ha-py-automations
