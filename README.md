@@ -1,4 +1,4 @@
-# Home-Assistant-Python-Apps
+# Home-Assistant-Python-Automations
 
 App-Damon was kind of a hassle, so I started my own Home Assistant Python Automation system.
 Startup.py is the entry point.
