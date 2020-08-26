@@ -59,6 +59,9 @@ def sendCommand(domain, service, service_data={}):
         }
     )
     nextId += 1
+
+    if(Debug):
+        print("Sending message: %s" % msg)
     asyncio.get_event_loop().create_task(websocket.send(msg))
 
 
@@ -73,10 +76,10 @@ async def main():
     ))
 
     getStateMsgId = nextId
+    nextId += 1
     await websocket.send(json.dumps(
         {'id': getStateMsgId, "type": "get_states"}
     ))
-    nextId += 1
 
     stateInitialized = False
     while not stateInitialized:
@@ -99,15 +102,17 @@ async def main():
             triggerStateInitialized()
             stateInitialized = True
 
-    await websocket.send(json.dumps(
-        {'id': nextId, 'type': 'subscribe_events', 'event_type': 'state_changed'}
-    ))
+    subscribeId = nextId
     nextId += 1
-    
     await websocket.send(json.dumps(
-        {'id': nextId, 'type': 'subscribe_events', 'event_type': 'deconz_event'}
+        {'id': subscribeId, 'type': 'subscribe_events', 'event_type': 'state_changed'}
     ))
+
+    subscribeId = nextId
     nextId += 1
+    await websocket.send(json.dumps(
+        {'id': subscribeId, 'type': 'subscribe_events', 'event_type': 'deconz_event'}
+    ))
 
     while True:
         message = await websocket.recv()
