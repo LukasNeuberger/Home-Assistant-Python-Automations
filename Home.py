@@ -12,6 +12,7 @@ if "DEBUG" in os.environ and os.environ["DEBUG"] == "True":
 
 state = {}
 stateChangedCallbacks = set()
+eventCallbacks = set()
 stateInitializedCallbacks = set()
 websocket = None
 nextId = 1
@@ -32,6 +33,19 @@ def removeStateChangedCallback(fct):
 def triggerStateChanged(entity, newState, oldState):
     for f in stateChangedCallbacks:
         f(entity, newState, oldState)
+
+
+def registerEventCallback(fct):
+    eventCallbacks.add(fct)
+
+
+def removeEventCallback(fct):
+    eventCallbacks.discard(fct)
+
+
+def triggerEvent(entity, data):
+    for f in eventCallbacks:
+        f(entity, data)
 
 
 def registerStateInitializedCallback(fct):
@@ -131,21 +145,22 @@ async def main():
                 entity = dic["event"]["data"]["entity_id"]
                 newState = dic["event"]["data"]["new_state"]
                 oldState = None
+
+                # get old state if it exists
+                if entity in state:
+                    oldState = state[entity]
+
+                # update state
+                state[entity] = newState
+
+                # trigger state changed callbacks
+                if((oldState == None) or (state[entity] != oldState)):
+                    triggerStateChanged(entity, newState, oldState)
+
             elif(dic["event"]["event_type"] == "deconz_event"):
                 entity = dic["event"]["data"]["id"]
-                newState = dic["event"]["data"]["event"]
-                oldState = None
-
-            # get old state if it exists
-            if entity in state:
-                oldState = state[entity]
-
-            # update state
-            state[entity] = newState
-
-            # trigger state changed callbacks
-            if((oldState == None) or (state[entity] != oldState)):
-                triggerStateChanged(entity, newState, oldState)
+                data = dic["event"]["data"]["event"]
+                triggerEvent(entity, data)
 
 
 def run():
