@@ -25,7 +25,7 @@ def loadAutomations():
             getattr(m, "initialize")()
             automations.append(m)
             Logging.Log(__name__, "Initialized Automation %s" % m)
-       except Exception as ex:
+        except Exception as ex:
             Logging.Log(__name__, "Error while initializing %s: %s" % (str(m), str(ex)))
 
 
