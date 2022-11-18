@@ -1,7 +1,8 @@
-import asyncws
-import json
-import asyncio
 import os
+import asyncio
+import websockets
+import json
+import Logging
 
 HomeassistantDomain = os.environ['HOMEASSISTANT_DOMAIN']
 API_AccessToken = os.environ['HOMEASSISTANT_API_TOKEN']
@@ -32,7 +33,11 @@ def removeStateChangedCallback(fct):
 
 def triggerStateChanged(entity, newState, oldState):
     for f in stateChangedCallbacks:
-        f(entity, newState, oldState)
+        try:
+            f(entity, newState, oldState)
+        except Exception as ex:
+            Logging.Log(__name__, "Error while calling StateChanged callback %s: %s" % (
+                str(f), str(ex)))
 
 
 def registerEventCallback(fct):
@@ -45,7 +50,11 @@ def removeEventCallback(fct):
 
 def triggerEvent(entity, data):
     for f in eventCallbacks:
-        f(entity, data)
+        try:
+            f(entity, data)
+        except Exception as ex:
+            Logging.Log(
+                __name__, "Error while calling Event callback %s: %s" % (str(f), str(ex)))
 
 
 def registerStateInitializedCallback(fct):
@@ -58,7 +67,11 @@ def removeStateInitializedCallback(fct):
 
 def triggerStateInitialized():
     for f in stateInitializedCallbacks:
-        f(state)
+        try:
+            f(state)
+        except Exception as ex:
+            Logging.Log(__name__, "Error while calling StateInitialized callback %s: %s" % (
+                str(f), str(ex)))
 
 
 def sendCommand(domain, service, service_data={}):
@@ -74,15 +87,15 @@ def sendCommand(domain, service, service_data={}):
     )
     nextId += 1
 
-    if(Debug):
-        print("Sending message: %s" % msg)
+    if (Debug):
+        Logging.Log(__name__, "Sending message: %s" % msg)
     asyncio.get_event_loop().create_task(websocket.send(msg))
 
 
 async def main():
     global websocket
     global nextId
-    websocket = await asyncws.connect('ws://%s/api/websocket' % HomeassistantDomain)
+    websocket = await websockets.connect('ws://%s/api/websocket' % HomeassistantDomain)
 
     await websocket.send(json.dumps(
         {'type': 'auth',
@@ -104,11 +117,11 @@ async def main():
         dic = json.loads(message)
 
         # if debug output is activated via DEBUG environment variable, print received payload
-        if(Debug):
-            print(dic)
+        if (Debug):
+            Logging.Log(__name__, dic)
 
         # initialize state with result of initial getState request and trigger callbacks of apps
-        if(dic["type"] == "result" and dic["id"] == getStateMsgId):
+        if (dic["type"] == "result" and dic["id"] == getStateMsgId):
             getStateMsgId = None
             for el in dic["result"]:
                 entity = el["entity_id"]
@@ -136,12 +149,12 @@ async def main():
         dic = json.loads(message)
 
         # if debug output is activated via DEBUG environment variable, print received payload
-        if(Debug):
-            print(dic)
+        if (Debug):
+            Logging.Log(__name__, dic)
 
         # if the state of an entity has changed update state and trigger callbacks of apps
-        if(dic["type"] == "event"):
-            if(dic["event"]["event_type"] == "state_changed"):
+        if (dic["type"] == "event"):
+            if (dic["event"]["event_type"] == "state_changed"):
                 entity = dic["event"]["data"]["entity_id"]
                 newState = dic["event"]["data"]["new_state"]
                 oldState = None
@@ -154,10 +167,10 @@ async def main():
                 state[entity] = newState
 
                 # trigger state changed callbacks
-                if((oldState == None) or (state[entity] != oldState)):
+                if ((oldState == None) or (state[entity] != oldState)):
                     triggerStateChanged(entity, newState, oldState)
 
-            elif(dic["event"]["event_type"] == "deconz_event"):
+            elif (dic["event"]["event_type"] == "deconz_event"):
                 entity = dic["event"]["data"]["id"]
                 data = dic["event"]["data"]["event"]
                 triggerEvent(entity, data)

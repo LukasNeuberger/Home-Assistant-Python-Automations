@@ -1,8 +1,9 @@
 import Home
 import AutomationManager
+import Logging
 
 
-print("Loading Automations")
+Logging.Log(__name__, "Loading Automations")
 AutomationManager.loadAutomations()
-print("Start Home Assistant Connection")
+Logging.Log(__name__, "Start Home Assistant Connection")
 Home.run()
