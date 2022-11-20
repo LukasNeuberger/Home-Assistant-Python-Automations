@@ -1,2 +1,2 @@
-def Log(module, msg):
+def log(module, msg):
     print("%s: %s" % (module, msg))

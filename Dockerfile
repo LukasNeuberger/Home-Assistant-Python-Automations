@@ -18,4 +18,4 @@ RUN mkdir Automations
 
 VOLUME ["/home/ha-py-automations/Automations"]
 
-CMD ["python", "Startup.py"]
+CMD ["python", "startup.py"]
