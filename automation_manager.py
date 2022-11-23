@@ -16,7 +16,7 @@ def load_automations():
         try:
             modules.append(importlib.import_module(f[:f.rfind(".py")]))
         except Exception as ex:
-            custom_logging.log(__name__, "Error while loading %s: %s" % (f, str(ex)))
+            custom_logging.log(__name__, "Error while loading %s: %s %s" % (f, type(ex), str(ex)))
 
     modules_with_initiaialize = [m for m in modules if "initialize" in dir(m)]
     for m in modules_with_initiaialize:
@@ -25,7 +25,7 @@ def load_automations():
             automations.append(m)
             custom_logging.log(__name__, "Initialized Automation %s" % m)
         except Exception as ex:
-            custom_logging.log(__name__, "Error while initializing %s: %s" % (str(m), str(ex)))
+            custom_logging.log(__name__, "Error while initializing %s: %s %s" % (str(m), type(ex), str(ex)))
 
 
 def unload_automations():
@@ -37,7 +37,7 @@ def unload_automations():
             getattr(m, "cleanup")()
             custom_logging.log(__name__, "Unloaded Automation %s" % m)
         except Exception as ex:
-            custom_logging.log(__name__, "Error while unloading %s: %s" % (str(m), str(ex)))
+            custom_logging.log(__name__, "Error while unloading %s: %s %s" % (str(m), type(ex), str(ex)))
     automations = []
     modules = []
 
